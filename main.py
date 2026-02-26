@@ -1,4 +1,4 @@
-import math
+from math import comb,log10,pi,log
 from scipy.stats import poisson, binom
 import matplotlib.pyplot as plt
 import matplotlib
@@ -12,6 +12,10 @@ def askparam(): #asks for the parameters
             m2 = int(input('Enter the number of particles in the cold bar ->'))
             E1 = int(input('Enter the number of energy packets in hot bar ->'))
             E2 = int(input('Enter the number of energy packets in cold bar ->'))
+            listofparam = [m1,m2,E1,E2]
+            if any(i <= 0 for i in listofparam):
+                print(1/0) #forces an exception
+
             return m1,m2,E1,E2
         except:
             print('Must be a whole, non zero number')
@@ -27,7 +31,7 @@ while E1>m1 or E2>m2:
 
 mt = m1+m2 #total number of atoms
 et = E1+E2 #total number of energy packets
-Pop = m1 / mt #percent of decimals taken up by bar 1
+PoissonProb = m1 / mt #percent of decimals taken up by bar 1
 
 x = np.arange(0, et+1)
 plt.xlim(0, min(m1+mt//10,et))
@@ -41,7 +45,7 @@ try: #normally does binomial
     
     label = 'Binomial Modelling'
 
-    pmf = binom.pmf(x, et, Pop)
+    pmf = binom.pmf(x, et, PoissonProb)
 
     print(f'There are {tempincreasestates:g} total states where heat increases')
     print(f'There are {totalstates:g} states in total')
@@ -54,7 +58,7 @@ try: #normally does binomial
     )
 
 except: #if they are too big, it defaults to poisson distribution
-    lamd = et * Pop #lambda is total energy * percent of slots taken up by hot bar
+    lamd = et * PoissonProb #lambda is total energy * percent of slots taken up by hot bar
     p = poisson.sf(E1,lamd) #calculates poisson distribution
     label = 'Poisson Modelling'
     pmf = poisson.pmf(x,lamd)
@@ -62,18 +66,21 @@ except: #if they are too big, it defaults to poisson distribution
     # symmetry: C(mt, et) = C(mt, mt-et)
     et = min(et, mt - et)
 
-    # Stirling-based approximation
+    # approximation for total states
     totalstatesapprox = int(round(
-        et * math.log10(mt)
-        - (et * math.log10(et) - et / math.log(10) + 0.5 * math.log10(2 * math.pi * et)),0
+        et * log10(mt)
+        - (et * log10(et) - et / log(10) + 0.5 * log10(2 * pi * et)),0
     ))
 
-    tempincreasestatesapprox = int(round(totalstatesapprox + math.log(p),0))
+    #finds the approximate number of states for an increase in temperature
+    tempincreasestatesapprox = int(round(totalstatesapprox + log(p),0))
     approx = "\u2248"
 
+    
     print('Numbers too large to provide total states')
     print(f'Probability of heat increasing is {p:g}') 
 
+    #text box for the graph
     stats_text = (
         f"Useful States {approx} 1e{tempincreasestatesapprox}\n"
         f"Total States {approx} 1e{totalstatesapprox}\n"
